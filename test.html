@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Three-Layer Demo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🎓 Three-Layer Application Demo</h1>
+        <p>Frontend → Middleware → Backend</p>
+
+        <div class="layers">
+            <!-- FRONTEND -->
+            <div class="layer frontend">
+                <h2>🎨 FRONTEND</h2>
+                <p>User Interface</p>
+                
+                <input type="text" id="nameInput" placeholder="Enter name">
+                <input type="number" id="ageInput" placeholder="Enter age">
+                <button onclick="addPerson()">Add Person</button>
+                <button onclick="showAllPeople()">Show All</button>
+                
+                <div id="display">
+                    <p>People will appear here...</p>
+                </div>
+            </div>
+
+            <!-- MIDDLEWARE -->
+            <div class="layer middleware">
+                <h2>⚙️ MIDDLEWARE</h2>
+                <p>Business Logic</p>
+                
+                <button onclick="clearMiddlewareLogs()" style="background: #dc3545; margin-bottom: 10px;">Clear Logs</button>
+                
+                <div id="middlewareLog">
+                    <p>Ready...</p>
+                </div>
+            </div>
+
+            <!-- BACKEND -->
+            <div class="layer backend">
+                <h2>🗄️ BACKEND</h2>
+                <p>Data Storage</p>
+                
+                <div id="dataStorage">
+                    <p>No data stored yet...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
+<!-- 
+===========================================
+FILE: style.css
+===========================================
+-->
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f0f0f0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.container > p {
+    text-align: center;
+    color: #666;
+    margin-bottom: 30px;
+}
+
+.layers {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    min-height: 400px;
+}
+
+.layer {
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+}
+
+.layer h2 {
+    margin-bottom: 5px;
+}
+
+.layer > p {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+.frontend {
+    background: #fff3e0;
+    border-color: #ff9800;
+}
+
+.middleware {
+    background: #e8f5e8;
+    border-color: #4caf50;
+}
+
+.backend {
+    background: #e3f2fd;
+    border-color: #2196f3;
+}
+
+input, button {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+button {
+    background: #007bff;
+    color: white;
+    cursor: pointer;
+    border: none;
+}
+
+button:hover {
+    background: #0056b3;
+}
+
+#display, #middlewareLog, #dataStorage {
+    margin-top: 20px;
+    padding: 15px;
+    background: rgba(255,255,255,0.7);
+    border-radius: 4px;
+    min-height: 100px;
+    text-align: left;
+    font-size: 12px;
+    border: 1px dashed #ccc;
+}
+
+.person-card {
+    background: white;
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+.log-entry {
+    background: #f8f9fa;
+    padding: 5px;
+    margin: 2px 0;
+    border-radius: 3px;
+    font-family: monospace;
+}
+
+.data-item {
+    background: #f1f8ff;
+    padding: 8px;
+    margin: 5px 0;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 11px;
+}
+</style>
+
+<!-- 
+===========================================
+FILE: script.js
+===========================================
+-->
+<script>
+// ===========================================
+// BACKEND - Data Storage Layer
+// ===========================================
+const Backend = {
+    // This simulates a database
+    database: [],
+    nextId: 1,
+
+    // Save data to "database"
+    save(data) {
+        console.log("BACKEND: Saving data to database");
+        const record = {
+            id: this.nextId++,
+            ...data,
+            timestamp: new Date().toLocaleTimeString()
+        };
+        this.database.push(record);
+        this.updateDisplay();
+        return { success: true, data: record };
+    },
+
+    // Get all data from "database"
+    getAll() {
+        console.log("BACKEND: Retrieving all data from database");
+        this.updateDisplay();
+        return { success: true, data: this.database };
+    },
+
+    // Update the backend display
+    updateDisplay() {
+        const display = document.getElementById('dataStorage');
+        if (this.database.length === 0) {
+            display.innerHTML = '<p>No data stored yet...</p>';
+            return;
+        }
+
+        const html = this.database.map(item => 
+            `<div class="data-item">
+                ID: ${item.id} | ${item.name} | Age: ${item.age} | ${item.timestamp}
+            </div>`
+        ).join('');
+        
+        display.innerHTML = html;
+    }
+};
+
+// ===========================================
+// MIDDLEWARE - Business Logic Layer
+// ===========================================
+const Middleware = {
+    // Process requests and apply business rules
+    processAddPerson(name, age) {
+        this.log("Processing add person request...");
+        
+        // Step 1: Validate data
+        if (!this.validateInput(name, age)) {
+            return { success: false, error: "Invalid input data" };
+        }
+        this.log("✓ Data validation passed");
+
+        // Step 2: Apply business logic
+        const processedData = this.applyBusinessLogic(name, age);
+        this.log(`✓ Applied business rules: ${processedData.category}`);
+
+        // Step 3: Send to backend
+        this.log("Sending to backend...");
+        const result = Backend.save(processedData);
+        
+        if (result.success) {
+            this.log(`✓ Person saved with ID: ${result.data.id}`);
+        }
+        
+        return result;
+    },
+
+    processGetAllPeople() {
+        this.log("Processing get all people request...");
+        const result = Backend.getAll();
+        
+        if (result.success) {
+            this.log(`✓ Retrieved ${result.data.length} records`);
+        }
+        
+        return result;
+    },
+
+    // Validate input data
+    validateInput(name, age) {
+        if (!name || name.trim().length < 2) return false;
+        if (!age || age < 1 || age > 120) return false;
+        return true;
+    },
+
+    // Apply business rules
+    applyBusinessLogic(name, age) {
+        let category;
+        if (age < 18) category = "Minor";
+        else if (age < 65) category = "Adult";
+        else category = "Senior";
+
+        return {
+            name: name.trim(),
+            age: parseInt(age),
+            category: category
+        };
+    },
+
+    // Log middleware activities
+    log(message) {
+        const logDiv = document.getElementById('middlewareLog');
+        const time = new Date().toLocaleTimeString();
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        entry.textContent = `[${time}] ${message}`;
+        logDiv.appendChild(entry);
+        logDiv.scrollTop = logDiv.scrollHeight;
+    },
+
+    // Clear middleware logs
+    clearLogs() {
+        const logDiv = document.getElementById('middlewareLog');
+        logDiv.innerHTML = '<p>Ready...</p>';
+        this.log("Logs cleared - System ready");
+    }
+};
+
+// ===========================================
+// FRONTEND - User Interface Layer
+// ===========================================
+const Frontend = {
+    // Display people data to user
+    displayPeople(people) {
+        const display = document.getElementById('display');
+        
+        if (!people || people.length === 0) {
+            display.innerHTML = '<p>No people to display...</p>';
+            return;
+        }
+
+        const html = people.map(person => 
+            `<div class="person-card">
+                <strong>${person.name}</strong> - Age: ${person.age} (${person.category})
+                <br><small>ID: ${person.id} | Added: ${person.timestamp}</small>
+            </div>`
+        ).join('');
+        
+        display.innerHTML = html;
+    },
+
+    // Show error message
+    showError(message) {
+        const display = document.getElementById('display');
+        display.innerHTML = `<p style="color: red;">Error: ${message}</p>`;
+    },
+
+    // Get form data
+    getFormData() {
+        return {
+            name: document.getElementById('nameInput').value,
+            age: document.getElementById('ageInput').value
+        };
+    },
+
+    // Clear form
+    clearForm() {
+        document.getElementById('nameInput').value = '';
+        document.getElementById('ageInput').value = '';
+    }
+};
+
+// ===========================================
+// USER INTERACTION FUNCTIONS
+// ===========================================
+function addPerson() {
+    const formData = Frontend.getFormData();
+    
+    // Send request through middleware
+    const result = Middleware.processAddPerson(formData.name, formData.age);
+    
+    if (result.success) {
+        Frontend.displayPeople([result.data]);
+        Frontend.clearForm();
+    } else {
+        Frontend.showError(result.error);
+    }
+}
+
+function showAllPeople() {
+    // Send request through middleware
+    const result = Middleware.processGetAllPeople();
+    
+    if (result.success) {
+        Frontend.displayPeople(result.data);
+    } else {
+        Frontend.showError(result.error);
+    }
+}
+
+function clearMiddlewareLogs() {
+    Middleware.clearLogs();
+}
+
+// Initialize with some sample data
+Backend.save({ name: "John Doe", age: 25, category: "Adult" });
+Backend.save({ name: "Jane Smith", age: 16, category: "Minor" });
+</script>
+
+<!-- 
+===========================================
+FILE: data.json (Sample data structure)
+===========================================
+[
+    {
+        "id": 1,
+        "name": "John Doe",
+        "age": 25,
+        "category": "Adult",
+        "timestamp": "10:30:45 AM"
+    },
+    {
+        "id": 2,
+        "name": "Jane Smith", 
+        "age": 16,
+        "category": "Minor",
+        "timestamp": "10:31:12 AM"
+    }
+]
+-->
+</script>
+</body>
+</html>
